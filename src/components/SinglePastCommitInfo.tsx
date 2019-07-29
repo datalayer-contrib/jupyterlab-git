@@ -1,60 +1,52 @@
-import { JupyterLab } from '@jupyterlab/application';
-
-import { SingleCommitInfo, CommitModifiedFile } from '../git';
-
-import { parseFileExtension } from './FileList';
-
-import { ResetDeleteSingleCommit } from './ResetDeleteSingleCommit';
-
-import {
-  commitStyle,
-  commitNumberLabelStyle,
-  commitAuthorLabelStyle,
-  commitAuthorIconStyle,
-  commitLabelDateStyle,
-  commitLabelMessageStyle,
-  commitOverviewNumbers,
-  commitDetailStyle,
-  commitDetailHeader,
-  commitDetailFileStyle,
-  commitDetailFilePathStyle,
-  iconStyle,
-  insertionIconStyle,
-  numberofChangedFilesStyle,
-  deletionIconStyle,
-  revertButtonStyle
-} from '../componentsStyle/SinglePastCommitInfoStyle';
-
+import { JupyterFrontEnd } from '@jupyterlab/application';
+import * as React from 'react';
+import { classes } from 'typestyle/';
+import { fileIconStyle } from '../componentsStyle/FileItemStyle';
 import {
   changeStageButtonStyle,
   discardFileButtonStyle
 } from '../componentsStyle/GitStageStyle';
-
-import { fileIconStyle } from '../componentsStyle/FileItemStyle';
-
-import * as React from 'react';
-
-import { classes } from 'typestyle/';
+import {
+  commitDetailFilePathStyle,
+  commitDetailFileStyle,
+  commitDetailHeader,
+  commitDetailStyle,
+  commitOverviewNumbers,
+  commitStyle,
+  deletionIconStyle,
+  floatRightStyle,
+  iconStyle,
+  insertionIconStyle,
+  numberofChangedFilesStyle,
+  revertButtonStyle
+} from '../componentsStyle/SinglePastCommitInfoStyle';
+import {
+  ICommitModifiedFile,
+  Git,
+  ISingleCommitInfo,
+  IDiffCallback
+} from '../git';
+import { parseFileExtension } from './FileList';
+import { ResetDeleteSingleCommit } from './ResetDeleteSingleCommit';
 
 export interface ISinglePastCommitInfoProps {
   topRepoPath: string;
-  num: string;
-  data: SingleCommitInfo;
-  info: string;
-  filesChanged: string;
-  insertionCount: string;
-  deletionCount: string;
-  list: [CommitModifiedFile];
-  app: JupyterLab;
-  diff: any;
-  display: boolean;
-  refresh: Function;
-  currentTheme: string;
+  data: ISingleCommitInfo;
+  app: JupyterFrontEnd;
+  diff: IDiffCallback;
+
+  refresh: () => void;
 }
 
 export interface ISinglePastCommitInfoState {
   displayDelete: boolean;
   displayReset: boolean;
+  info: string;
+  filesChanged: string;
+  insertionCount: string;
+  deletionCount: string;
+  modifiedFiles: Array<ICommitModifiedFile>;
+  loadingState: 'loading' | 'error' | 'success';
 }
 
 export class SinglePastCommitInfo extends React.Component<
@@ -65,9 +57,46 @@ export class SinglePastCommitInfo extends React.Component<
     super(props);
     this.state = {
       displayDelete: false,
-      displayReset: false
+      displayReset: false,
+      info: '',
+      filesChanged: '',
+      insertionCount: '',
+      deletionCount: '',
+      modifiedFiles: [],
+      loadingState: 'loading'
     };
+    this.showPastCommitWork();
   }
+
+  showPastCommitWork = async () => {
+    let gitApi = new Git();
+    let detailedLogData;
+    try {
+      detailedLogData = await gitApi.detailedLog(
+        this.props.data.commit,
+        this.props.topRepoPath
+      );
+    } catch (err) {
+      console.error(
+        `Error while gettting detailed log for commit ${
+          this.props.data.commit
+        } and path ${this.props.topRepoPath}`,
+        err
+      );
+      this.setState(() => ({ loadingState: 'error' }));
+      return;
+    }
+    if (detailedLogData.code === 0) {
+      this.setState({
+        info: detailedLogData.modified_file_note,
+        filesChanged: detailedLogData.modified_files_count,
+        insertionCount: detailedLogData.number_of_insertions,
+        deletionCount: detailedLogData.number_of_deletions,
+        modifiedFiles: detailedLogData.modified_files,
+        loadingState: 'success'
+      });
+    }
+  };
 
   showDeleteCommit = () => {
     this.setState({
@@ -96,46 +125,27 @@ export class SinglePastCommitInfo extends React.Component<
   };
 
   render() {
+    if (this.state.loadingState === 'loading') {
+      return <div>...</div>;
+    }
+    if (this.state.loadingState === 'error') {
+      return <div>Error loading commit data</div>;
+    }
     return (
       <div>
         <div className={commitStyle}>
-          <div>
-            <div className={commitAuthorLabelStyle}>
-              <span className={commitAuthorIconStyle} />
-              {this.props.data.author}
-            </div>
-            <div className={commitLabelDateStyle}>{this.props.data.date}</div>
-            <span className={commitNumberLabelStyle}>
-              #{this.props.data.commit
-                ? this.props.data.commit.substring(0, 7)
-                : ''}
-            </span>
-          </div>
-          <div className={commitLabelMessageStyle}>
-            {this.props.data.commit_msg}
-          </div>
           <div className={commitOverviewNumbers}>
             <span>
               <span className={classes(iconStyle, numberofChangedFilesStyle)} />
-              {this.props.filesChanged}
+              {this.state.filesChanged}
             </span>
             <span>
-              <span
-                className={classes(
-                  iconStyle,
-                  insertionIconStyle(this.props.currentTheme)
-                )}
-              />
-              {this.props.insertionCount}
+              <span className={classes(iconStyle, insertionIconStyle)} />
+              {this.state.insertionCount}
             </span>
             <span>
-              <span
-                className={classes(
-                  iconStyle,
-                  deletionIconStyle(this.props.currentTheme)
-                )}
-              />
-              {this.props.deletionCount}
+              <span className={classes(iconStyle, deletionIconStyle)} />
+              {this.state.deletionCount}
             </span>
           </div>
         </div>
@@ -145,14 +155,16 @@ export class SinglePastCommitInfo extends React.Component<
             <button
               className={classes(
                 changeStageButtonStyle,
-                discardFileButtonStyle(this.props.currentTheme)
+                floatRightStyle,
+                discardFileButtonStyle
               )}
               onClick={this.showDeleteCommit}
             />
             <button
               className={classes(
                 changeStageButtonStyle,
-                revertButtonStyle(this.props.currentTheme)
+                floatRightStyle,
+                revertButtonStyle
               )}
               onClick={this.showResetToCommit}
             />
@@ -177,8 +189,8 @@ export class SinglePastCommitInfo extends React.Component<
               />
             )}
           </div>
-          {this.props.list.length > 0 &&
-            this.props.list.map((modifiedFile, modifiedFileIndex) => {
+          {this.state.modifiedFiles.length > 0 &&
+            this.state.modifiedFiles.map((modifiedFile, modifiedFileIndex) => {
               return (
                 <li className={commitDetailFileStyle} key={modifiedFileIndex}>
                   <span
@@ -197,7 +209,6 @@ export class SinglePastCommitInfo extends React.Component<
                     className={commitDetailFilePathStyle}
                     onDoubleClick={() => {
                       this.props.diff(
-                        this.props.app,
                         modifiedFile.modified_file_path,
                         this.props.data.commit,
                         this.props.data.pre_commit

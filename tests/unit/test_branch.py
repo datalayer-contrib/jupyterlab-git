@@ -83,7 +83,7 @@ def test_get_current_branch_success(mock_subproc_popen):
     mock_subproc_popen.return_value = process_mock
 
     # When
-    actual_response = Git(root_dir='/bin')._get_current_branch(
+    actual_response = Git(root_dir='/bin').get_current_branch(
         current_path='test_curr_path')
 
     # Then
@@ -104,7 +104,8 @@ def test_get_current_branch_failure(mock_subproc_popen):
     # Given
     process_mock = Mock()
     attrs = {
-        'communicate.return_value': ('', 'fatal: Not a git repository (or any of the parent directories): .git'.encode('utf-8')),
+        'communicate.return_value': (
+            '', 'fatal: Not a git repository (or any of the parent directories): .git'.encode('utf-8')),
         'returncode': 128
     }
     process_mock.configure_mock(**attrs)
@@ -112,8 +113,8 @@ def test_get_current_branch_failure(mock_subproc_popen):
 
     # When
     with pytest.raises(Exception) as error:
-        Git(root_dir='/bin')._get_current_branch(current_path='test_curr_path')
-    
+        Git(root_dir='/bin').get_current_branch(current_path='test_curr_path')
+
     # Then
     mock_subproc_popen.assert_has_calls([
         call(
@@ -124,8 +125,10 @@ def test_get_current_branch_failure(mock_subproc_popen):
         ),
         call().communicate()
     ])
-    assert 'Error [fatal: Not a git repository (or any of the parent directories): .git] '\
-    'occurred while executing [git rev-parse --abbrev-ref HEAD] command to get current branch.' == str(error.value)
+    assert 'Error [fatal: Not a git repository (or any of the parent directories): .git] ' \
+           'occurred while executing [git rev-parse --abbrev-ref HEAD] command to get current branch.' == str(
+        error.value)
+
 
 @patch('subprocess.Popen')
 def test_get_detached_head_name_success(mock_subproc_popen):
@@ -166,7 +169,8 @@ def test_get_detached_head_name_failure(mock_subproc_popen):
     # Given
     process_mock = Mock()
     attrs = {
-        'communicate.return_value': ('', 'fatal: Not a git repository (or any of the parent directories): .git'.encode('utf-8')),
+        'communicate.return_value': (
+            '', 'fatal: Not a git repository (or any of the parent directories): .git'.encode('utf-8')),
         'returncode': 128
     }
     process_mock.configure_mock(**attrs)
@@ -175,7 +179,7 @@ def test_get_detached_head_name_failure(mock_subproc_popen):
     # When
     with pytest.raises(Exception) as error:
         Git(root_dir='/bin')._get_detached_head_name(current_path='test_curr_path')
-    
+
     # Then
     mock_subproc_popen.assert_has_calls([
         call(
@@ -186,9 +190,8 @@ def test_get_detached_head_name_failure(mock_subproc_popen):
         ),
         call().communicate()
     ])
-    assert 'Error [fatal: Not a git repository (or any of the parent directories): .git] '\
-    'occurred while executing [git branch -a] command to get detached HEAD name.' == str(error.value)
-
+    assert 'Error [fatal: Not a git repository (or any of the parent directories): .git] ' \
+           'occurred while executing [git branch -a] command to get detached HEAD name.' == str(error.value)
 
 
 @patch('subprocess.Popen')
@@ -211,14 +214,14 @@ def test_get_upstream_branch_success(mock_subproc_popen):
         mock_subproc_popen.return_value = process_mock
 
         # When
-        actual_response = Git(root_dir='/bin')._get_upstream_branch(
+        actual_response = Git(root_dir='/bin').get_upstream_branch(
             current_path='test_curr_path', branch_name=test_case[0])
 
         # Then
         mock_subproc_popen.assert_has_calls([
             call(
                 ['git', 'rev-parse', '--abbrev-ref',
-                    '{}@{{upstream}}'.format(test_case[0])],
+                 '{}@{{upstream}}'.format(test_case[0])],
                 stdout=PIPE,
                 stderr=PIPE,
                 cwd='/bin/test_curr_path'
@@ -242,14 +245,15 @@ def test_get_upstream_branch_failure(mock_subproc_popen):
 
     # When
     with pytest.raises(Exception) as error:
-        Git(root_dir='/bin')._get_upstream_branch(
+        Git(root_dir='/bin').get_upstream_branch(
             current_path='test_curr_path', branch_name='blah')
-    
-    assert "Error [fatal: no such branch: 'blah'] "\
-    "occurred while executing [git rev-parse --abbrev-ref blah@{upstream}] command to get upstream branch." == str(error.value)
 
-    actual_response = Git(root_dir='/bin')._get_upstream_branch(
-            current_path='test_curr_path', branch_name='test')
+    assert "Error [fatal: no such branch: 'blah'] " \
+           "occurred while executing [git rev-parse --abbrev-ref blah@{upstream}] command to get upstream branch." == str(
+        error.value)
+
+    actual_response = Git(root_dir='/bin').get_upstream_branch(
+        current_path='test_curr_path', branch_name='test')
 
     assert None == actual_response
 
@@ -257,7 +261,7 @@ def test_get_upstream_branch_failure(mock_subproc_popen):
     mock_subproc_popen.assert_has_calls([
         call(
             ['git', 'rev-parse', '--abbrev-ref',
-                'blah@{upstream}'],
+             'blah@{upstream}'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
@@ -265,14 +269,14 @@ def test_get_upstream_branch_failure(mock_subproc_popen):
         call().communicate(),
         call(
             ['git', 'rev-parse', '--abbrev-ref',
-                'test@{upstream}'],
+             'test@{upstream}'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
         ),
         call().communicate()
     ], any_order=False)
-    
+
 
 @patch('subprocess.Popen')
 def test_get_tag_success(mock_subproc_popen):
@@ -292,7 +296,7 @@ def test_get_tag_success(mock_subproc_popen):
     # Then
     mock_subproc_popen.assert_has_calls([
         call(
-            ['git', 'describe', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
+            ['git', 'describe', '--tags', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
@@ -316,33 +320,34 @@ def test_get_tag_failure(mock_subproc_popen):
     with pytest.raises(Exception) as error:
         Git(root_dir='/bin')._get_tag(
             current_path='test_curr_path', commit_sha='blah')
-    
-    assert "Error [fatal: Not a valid object name blah] "\
-    "occurred while executing [git describe blah] command to get nearest tag associated with branch." == str(error.value)
+
+    assert "Error [fatal: Not a valid object name blah] " \
+           "occurred while executing [git describe --tags blah] command to get nearest tag associated with branch." == str(
+        error.value)
 
     actual_response = Git(root_dir='/bin')._get_tag(
-            current_path='test_curr_path', commit_sha='01234567899999abcdefghijklmnopqrstuvwxyz')
+        current_path='test_curr_path', commit_sha='01234567899999abcdefghijklmnopqrstuvwxyz')
 
     assert None == actual_response
 
     # Then
     mock_subproc_popen.assert_has_calls([
         call(
-            ['git', 'describe', 'blah'],
+            ['git', 'describe', '--tags', 'blah'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
         ),
         call().communicate(),
         call(
-            ['git', 'describe', '01234567899999abcdefghijklmnopqrstuvwxyz'],
+            ['git', 'describe', '--tags', '01234567899999abcdefghijklmnopqrstuvwxyz'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
         ),
         call().communicate()
     ], any_order=False)
-    
+
 
 @patch('subprocess.Popen')
 def test_branch_success(mock_subproc_popen):
@@ -384,6 +389,7 @@ def test_branch_success(mock_subproc_popen):
                 'is_remote_branch': False,
                 'name': 'feature-foo',
                 'upstream': 'origin/master',
+                'top_commit': 'abcdefghijklmnopqrstuvwxyz01234567890123',
                 'tag': 'v0.3.0',
             },
             {
@@ -391,6 +397,7 @@ def test_branch_success(mock_subproc_popen):
                 'is_remote_branch': False,
                 'name': 'master',
                 'upstream': 'origin/master',
+                'top_commit': 'abcdefghijklmnopqrstuvwxyz01234567890123',
                 'tag': 'v0.3.0',
             },
             {
@@ -398,12 +405,14 @@ def test_branch_success(mock_subproc_popen):
                 'is_remote_branch': False,
                 'name': 'feature-bar',
                 'upstream': 'origin/master',
+                'top_commit': '01234567899999abcdefghijklmnopqrstuvwxyz',
                 'tag': 'v0.3.1'},
             {
                 'is_current_branch': False,
                 'is_remote_branch': True,
                 'name': 'origin/feature-foo',
                 'upstream': None,
+                'top_commit': 'abcdefghijklmnopqrstuvwxyz01234567890123',
                 'tag': 'v0.4.2',
             },
             {
@@ -411,6 +420,7 @@ def test_branch_success(mock_subproc_popen):
                 'is_remote_branch': True,
                 'name': 'origin/HEAD',
                 'upstream': None,
+                'top_commit': 'abcdefghijklmnopqrstuvwxyz01234567890123',
                 'tag': 'v0.4.1',
             }
         ]
@@ -446,7 +456,7 @@ def test_branch_success(mock_subproc_popen):
         ),
         call().communicate(),
         call(
-            ['git', 'describe', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
+            ['git', 'describe', '--tags', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
@@ -460,7 +470,7 @@ def test_branch_success(mock_subproc_popen):
         ),
         call().communicate(),
         call(
-            ['git', 'describe', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
+            ['git', 'describe', '--tags', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
@@ -474,7 +484,7 @@ def test_branch_success(mock_subproc_popen):
         ),
         call().communicate(),
         call(
-            ['git', 'describe', '01234567899999abcdefghijklmnopqrstuvwxyz'],
+            ['git', 'describe', '--tags', '01234567899999abcdefghijklmnopqrstuvwxyz'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
@@ -482,14 +492,14 @@ def test_branch_success(mock_subproc_popen):
         call().communicate(),
         # Calls to get tag for remote branch
         call(
-            ['git', 'describe', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
+            ['git', 'describe', '--tags', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
         ),
         call().communicate(),
         call(
-            ['git', 'describe', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
+            ['git', 'describe', '--tags', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
@@ -505,7 +515,8 @@ def test_branch_failure(mock_subproc_popen):
     # Given
     process_mock = Mock()
     attrs = {
-        'communicate.return_value': ('', 'fatal: Not a git repository (or any of the parent directories): .git'.encode('utf-8')),
+        'communicate.return_value': (
+            '', 'fatal: Not a git repository (or any of the parent directories): .git'.encode('utf-8')),
         'returncode': 128
     }
     process_mock.configure_mock(**attrs)
@@ -530,6 +541,7 @@ def test_branch_failure(mock_subproc_popen):
         call().communicate()
     ])
     assert expected_response == actual_response
+
 
 @patch('subprocess.Popen')
 def test_branch_success_detached_head(mock_subproc_popen):
@@ -570,6 +582,7 @@ def test_branch_success_detached_head(mock_subproc_popen):
                 'is_remote_branch': False,
                 'name': 'master',
                 'upstream': 'origin/master',
+                'top_commit': 'abcdefghijklmnopqrstuvwxyz01234567890123',
                 'tag': 'v0.3.0',
             },
             {
@@ -577,6 +590,7 @@ def test_branch_success_detached_head(mock_subproc_popen):
                 'is_remote_branch': True,
                 'name': 'origin/feature-foo',
                 'upstream': None,
+                'top_commit': 'abcdefghijklmnopqrstuvwxyz01234567890123',
                 'tag': 'v0.4.2',
             },
             {
@@ -584,6 +598,7 @@ def test_branch_success_detached_head(mock_subproc_popen):
                 'is_remote_branch': False,
                 'name': '(HEAD detached at origin/feature-foo)',
                 'upstream': None,
+                'top_commit': None,
                 'tag': None,
             }
         ]
@@ -619,7 +634,7 @@ def test_branch_success_detached_head(mock_subproc_popen):
         ),
         call().communicate(),
         call(
-            ['git', 'describe', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
+            ['git', 'describe', '--tags', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
@@ -627,7 +642,7 @@ def test_branch_success_detached_head(mock_subproc_popen):
         call().communicate(),
         # Calls to get tag for remote branch
         call(
-            ['git', 'describe', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
+            ['git', 'describe', '--tags', 'abcdefghijklmnopqrstuvwxyz01234567890123'],
             stdout=PIPE,
             stderr=PIPE,
             cwd='/bin/test_curr_path'
@@ -643,3 +658,30 @@ def test_branch_success_detached_head(mock_subproc_popen):
     ], any_order=False)
 
     assert expected_response == actual_response
+
+
+@patch('subprocess.Popen')
+def test_no_tags(mock_subproc_popen):
+    # Given
+    process_mock = Mock()
+    attrs = {
+        'communicate.return_value': (b'', b'fatal: No names found, cannot describe anything.\n'),
+        'returncode': 128
+    }
+    process_mock.configure_mock(**attrs)
+    mock_subproc_popen.return_value = process_mock
+
+    # When
+    actual_response = Git(root_dir='/bin')._get_tag('/path/foo', '768c79ad661598889f29bdf8916f4cc488f5062a')
+
+    # Then
+    mock_subproc_popen.assert_has_calls([
+        call(
+            ['git', 'describe', '--tags', '768c79ad661598889f29bdf8916f4cc488f5062a'],
+            stdout=PIPE,
+            stderr=PIPE,
+            cwd='/path/foo'
+        ),
+        call().communicate()
+    ])
+    assert actual_response is None

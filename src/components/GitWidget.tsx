@@ -8,7 +8,7 @@ import { Message } from '@phosphor/messaging';
 
 import { Widget } from '@phosphor/widgets';
 
-import { JupyterLab } from '@jupyterlab/application';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 
 import { ISignal, Signal } from '@phosphor/signaling';
 
@@ -16,7 +16,7 @@ import { GitPanel } from './GitPanel';
 
 import { gitWidgetStyle } from '../componentsStyle/GitWidgetStyle';
 
-import '../../style/variables.css';
+import { IDiffCallback } from '../git';
 
 /**
  * An options object for creating a running sessions widget.
@@ -66,18 +66,22 @@ export class GitWidget extends Widget {
   /**
    * Construct a new running widget.
    */
-  constructor(app: JupyterLab, options: IOptions, diff_function: any) {
+  constructor(
+    app: JupyterFrontEnd,
+    options: IOptions,
+    diffFunction: IDiffCallback
+  ) {
     super({
       node: (options.renderer || defaultRenderer).createNode()
     });
     this.addClass(gitWidgetStyle);
-    const element = <GitPanel app={app} diff={diff_function} />;
+    const element = <GitPanel app={app} diff={diffFunction} />;
     this.component = ReactDOM.render(element, this.node);
     this.component.refresh();
   }
 
   /**
-   * Override widget's default show() to 
+   * Override widget's default show() to
    * refresh content every time Git widget is shown.
    */
   show(): void {
@@ -129,6 +133,7 @@ export class GitWidget extends Widget {
     switch (event.type) {
       case 'change':
         this._evtChange(event as MouseEvent);
+        break;
       case 'click':
         this._evtClick(event as MouseEvent);
         break;

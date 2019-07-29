@@ -8,15 +8,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='jupyterlab_git',
-    version='0.3.0',
-    author='Git Intern Team, Noah Stapp, Jenna Landy, Alena Mueller',
+    version='0.6.1',
+    author='Git Intern Team - Noah Stapp, Jenna Landy, Alena Mueller; AWS - Jaipreet Singh, Neelam Gehlot; Quansight - Saul Shanabrook',
     description="A server extension for JupyterLab's git extension",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
     install_requires=[
-        'notebook',
-        'psutil'
+        'notebook'
     ],
     package_data={'jupyterlab_git': ['*']},
 )

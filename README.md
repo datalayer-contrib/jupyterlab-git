@@ -1,8 +1,7 @@
 # jupyterlab-git
 
-[![Binder](https://beta.mybinder.org/badge.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-git/master?urlpath=lab)
+[![Binder](https://beta.mybinder.org/badge.svg)](https://mybinder.org/v2/gh/jupyterlab/jupyterlab-git/master?urlpath=lab) [![Build Status](https://travis-ci.org/jupyterlab/jupyterlab-git.svg?branch=master)](https://travis-ci.org/jupyterlab/jupyterlab-git) [![Version](https://img.shields.io/npm/v/@jupyterlab/git.svg)](https://www.npmjs.com/package/@jupyterlab/git) [![Version](https://img.shields.io/pypi/v/jupyterlab-git.svg)](https://pypi.org/project/jupyterlab-git/) [![Downloads](https://img.shields.io/npm/dm/@jupyterlab/git.svg)](https://www.npmjs.com/package/@jupyterlab/git) [![Version](https://img.shields.io/conda/vn/conda-forge/jupyterlab-git.svg)](https://anaconda.org/conda-forge/jupyterlab-git) [![Downloads](https://img.shields.io/conda/dn/conda-forge/jupyterlab-git.svg)](https://anaconda.org/conda-forge/jupyterlab-git)
 
-[![Build Status](https://travis-ci.org/jupyterlab/jupyterlab-git.svg?branch=master)](https://travis-ci.org/jupyterlab/jupyterlab-git)
 
 A JupyterLab extension for version control using git
 
@@ -18,12 +17,11 @@ A JupyterLab extension for version control using git
 
 ## Install
 
-```bash
-jupyter labextension install @jupyterlab/git
-```
+To install perform the following steps:
 
 ```bash
-pip install jupyterlab-git
+jupyter labextension install @jupyterlab/git
+pip install --upgrade jupyterlab-git
 jupyter serverextension enable --py jupyterlab_git
 ```
 
@@ -44,14 +42,18 @@ JupyterLab Git's current maintainers are listed in alphabetical order, with affi
 - Tim George, Cal Poly (UI/UX design, strategy, management, user needs analysis).
 - Brian Granger, Cal Poly (co-creator, strategy, vision, management, UI/UX design,
   architecture).
-- Jenna Landy, Cal Poly (sofware engineering).
-- Alena Mueller, Cal Poly (UI/UX design).
+- Saul Shanabrook, Quansight(software engineering)
+- Jaipreet Singh, AWS (software engineering, UI/UX design, management)
+- William Wang, AWS (UI/UX design)
 
 Maintainer emeritus:
 
 - Ashutosh Bondre, Cal Poly (software engineering).
 - Noah Stapp, Cal Poly (software engineering).
 - Ji Zhang, Cal Poly (software engineering).
+- Jenna Landy, Cal Poly (sofware engineering).
+- Alena Mueller, Cal Poly (UI/UX design).
+- Neelam Gehlot, AWS (software engineering)
 
 This list is provided to help provide context about who we are and how our team functions.
 If you would like to be listed, please submit a pull request with your information.
@@ -85,5 +87,3 @@ To rebuild the package and the JupyterLab app:
 npm run build
 jupyter lab build
 ```
-
-

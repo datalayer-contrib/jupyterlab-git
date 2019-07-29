@@ -1,4 +1,4 @@
-import { JupyterLab } from '@jupyterlab/application';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 
 import {
   changeStageButtonStyle,
@@ -34,11 +34,11 @@ export interface IFileItemProps {
   topRepoPath: string;
   file: any;
   stage: string;
-  app: JupyterLab;
+  app: JupyterFrontEnd;
   refresh: any;
   moveFile: Function;
   discardFile: Function;
-  moveFileIconClass: Function;
+  moveFileIconClass: string;
   moveFileIconSelectedClass: string;
   moveFileTitle: string;
   openFile: Function;
@@ -55,7 +55,6 @@ export interface IFileItemProps {
   disableFile: boolean;
   toggleDisableFiles: Function;
   sideBarExpanded: boolean;
-  currentTheme: string;
 }
 
 export class FileItem extends React.Component<IFileItemProps, {}> {
@@ -161,7 +160,7 @@ export class FileItem extends React.Component<IFileItemProps, {}> {
         changeStageButtonStyle,
         changeStageButtonLeftStyle,
         fileGitButtonStyle,
-        this.props.moveFileIconClass(this.props.currentTheme)
+        this.props.moveFileIconClass
       );
     } else {
       return this.checkSelected()
@@ -177,7 +176,7 @@ export class FileItem extends React.Component<IFileItemProps, {}> {
             changeStageButtonStyle,
             changeStageButtonLeftStyle,
             fileGitButtonStyle,
-            this.props.moveFileIconClass(this.props.currentTheme)
+            this.props.moveFileIconClass
           );
     }
   }
@@ -188,7 +187,7 @@ export class FileItem extends React.Component<IFileItemProps, {}> {
         fileButtonStyle,
         changeStageButtonStyle,
         fileGitButtonStyle,
-        discardFileButtonStyle(this.props.currentTheme)
+        discardFileButtonStyle
       );
     } else {
       return this.checkSelected()
@@ -202,7 +201,7 @@ export class FileItem extends React.Component<IFileItemProps, {}> {
             fileButtonStyle,
             changeStageButtonStyle,
             fileGitButtonStyle,
-            discardFileButtonStyle(this.props.currentTheme)
+            discardFileButtonStyle
           );
     }
   }
@@ -277,6 +276,7 @@ export class FileItem extends React.Component<IFileItemProps, {}> {
               this.props.app
             )
           }
+          title={this.props.file.to}
         >
           {this.props.extractFilename(this.props.file.to)}
           <span className={this.getFileChangedLabelClass(this.props.file.y)}>

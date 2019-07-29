@@ -1,16 +1,17 @@
 import * as React from 'react';
 
-import { JupyterLab } from '@jupyterlab/application';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 
 import {
   Git,
-  GitBranchResult,
-  GitStatusResult,
-  GitShowTopLevelResult,
-  GitAllHistory,
-  GitLogResult,
-  SingleCommitInfo,
-  GitStatusFileResult
+  IGitBranchResult,
+  IGitStatusResult,
+  IGitShowTopLevelResult,
+  IGitAllHistory,
+  IGitLogResult,
+  ISingleCommitInfo,
+  IGitStatusFileResult,
+  IDiffCallback
 } from '../git';
 
 import { PathHeader } from './PathHeader';
@@ -23,13 +24,9 @@ import { HistorySideBar } from './HistorySideBar';
 
 import {
   panelContainerStyle,
-  panelPushedContentStyle,
-  panelContentStyle,
   panelWarningStyle,
   findRepoButtonStyle
 } from '../componentsStyle/GitPanelStyle';
-
-import { classes } from 'typestyle';
 
 /** Interface for GitPanel component state */
 export interface IGitSessionNodeState {
@@ -51,20 +48,12 @@ export interface IGitSessionNodeState {
   untrackedFiles: any;
 
   sideBarExpanded: boolean;
-
-  pastCommitInfo: string;
-  pastCommitFilesChanged: string;
-  pastCommitInsertionCount: string;
-  pastCommitDeletionCount: string;
-  pastCommitData: any;
-  pastCommitNumber: any;
-  pastCommitFilelist: any;
 }
 
 /** Interface for GitPanel component props */
 export interface IGitSessionNodeProps {
-  app: JupyterLab;
-  diff: any;
+  app: JupyterFrontEnd;
+  diff: IDiffCallback;
 }
 
 /** A React component for the git extension's main display */
@@ -88,40 +77,12 @@ export class GitPanel extends React.Component<
       stagedFiles: [],
       unstagedFiles: [],
       untrackedFiles: [],
-      sideBarExpanded: false,
-      pastCommitInfo: '',
-      pastCommitFilesChanged: '',
-      pastCommitInsertionCount: '',
-      pastCommitDeletionCount: '',
-      pastCommitData: '',
-      pastCommitNumber: '',
-      pastCommitFilelist: ''
+      sideBarExpanded: false
     };
   }
 
   setShowList = (state: boolean) => {
     this.setState({ showList: state });
-  };
-
-  /** Show the commit message and changes from a past commit */
-  showPastCommitWork = async (
-    pastCommit: SingleCommitInfo,
-    pastCommitIndex: number,
-    path: string
-  ) => {
-    let gitApi = new Git();
-    let detailedLogData = await gitApi.detailedLog(pastCommit.commit, path);
-    if (detailedLogData.code === 0) {
-      this.setState({
-        pastCommitInfo: detailedLogData.modified_file_note,
-        pastCommitFilesChanged: detailedLogData.modified_files_count,
-        pastCommitInsertionCount: detailedLogData.number_of_insertions,
-        pastCommitDeletionCount: detailedLogData.number_of_deletions,
-        pastCommitData: pastCommit,
-        pastCommitNumber: pastCommitIndex + ' commit(s) before',
-        pastCommitFilelist: detailedLogData.modified_files
-      });
-    }
   };
 
   /**
@@ -144,16 +105,16 @@ export class GitPanel extends React.Component<
 
         if (apiResult.code === 0) {
           // Get top level path of repo
-          let apiShowTopLevel = (apiResult as GitAllHistory).data
+          let apiShowTopLevel = (apiResult as IGitAllHistory).data
             .show_top_level;
 
           // Get current and upstream git branch
-          let branchData = (apiResult as GitAllHistory).data.branch;
+          let branchData = (apiResult as IGitAllHistory).data.branch;
           let currentBranch = 'master';
           let upstreamBranch = '';
           if (branchData.code === 0) {
-            let allBranches = (branchData as GitBranchResult).branches;
-            for (var i = 0; i < allBranches.length; i++) {
+            let allBranches = (branchData as IGitBranchResult).branches;
+            for (let i = 0; i < allBranches.length; i++) {
               if (allBranches[i].is_current_branch) {
                 currentBranch = allBranches[i].name;
                 upstreamBranch = allBranches[i].upstream;
@@ -163,21 +124,21 @@ export class GitPanel extends React.Component<
           }
 
           // Get git log for current branch
-          let logData = (apiResult as GitAllHistory).data.log;
-          let pastCommits = new Array<SingleCommitInfo>();
+          let logData = (apiResult as IGitAllHistory).data.log;
+          let pastCommits = new Array<ISingleCommitInfo>();
           if (logData.code === 0) {
-            pastCommits = (logData as GitLogResult).commits;
+            pastCommits = (logData as IGitLogResult).commits;
           }
 
           // Get git status for current branch
-          let stagedFiles = new Array<GitStatusFileResult>(),
-            unstagedFiles = new Array<GitStatusFileResult>(),
-            untrackedFiles = new Array<GitStatusFileResult>();
+          let stagedFiles = new Array<IGitStatusFileResult>();
+          let unstagedFiles = new Array<IGitStatusFileResult>();
+          let untrackedFiles = new Array<IGitStatusFileResult>();
           let changedFiles = 0;
           let disableSwitchBranch = true;
-          let statusData = (apiResult as GitAllHistory).data.status;
+          let statusData = (apiResult as IGitAllHistory).data.status;
           if (statusData.code === 0) {
-            let statusFiles = (statusData as GitStatusResult).files;
+            let statusFiles = (statusData as IGitStatusResult).files;
             for (let i = 0; i < statusFiles.length; i++) {
               // If file has been changed
               if (statusFiles[i].x !== '?' && statusFiles[i].x !== '!') {
@@ -210,7 +171,7 @@ export class GitPanel extends React.Component<
           // If not in same repo as before refresh, display the current repo
           let inNewRepo =
             this.state.topRepoPath !==
-            (apiShowTopLevel as GitShowTopLevelResult).top_repo_path;
+            (apiShowTopLevel as IGitShowTopLevelResult).top_repo_path;
           let showList = this.state.showList;
           if (inNewRepo) {
             showList = true;
@@ -218,10 +179,10 @@ export class GitPanel extends React.Component<
 
           this.setState({
             currentFileBrowserPath: (fileBrowser as any).model.path,
-            topRepoPath: (apiShowTopLevel as GitShowTopLevelResult)
+            topRepoPath: (apiShowTopLevel as IGitShowTopLevelResult)
               .top_repo_path,
             showWarning: true,
-            branches: (branchData as GitBranchResult).branches,
+            branches: (branchData as IGitBranchResult).branches,
             currentBranch: currentBranch,
             upstreamBranch: upstreamBranch,
             disableSwitchBranch: disableSwitchBranch,
@@ -249,12 +210,6 @@ export class GitPanel extends React.Component<
     this.setState({ sideBarExpanded: !this.state.sideBarExpanded });
   };
 
-  getContentClass(): string {
-    return this.state.sideBarExpanded
-      ? classes(panelPushedContentStyle, panelContentStyle)
-      : panelContentStyle;
-  }
-
   render() {
     return (
       <div className={panelContainerStyle}>
@@ -264,16 +219,9 @@ export class GitPanel extends React.Component<
           refresh={this.refresh}
           currentBranch={this.state.currentBranch}
         />
-        <div className={this.getContentClass()}>
+        <div>
           {this.state.showWarning && (
             <div>
-              <HistorySideBar
-                isExpanded={this.state.sideBarExpanded}
-                currentFileBrowserPath={this.state.currentFileBrowserPath}
-                pastCommits={this.state.pastCommits}
-                setShowList={this.setShowList}
-                getPastCommit={this.showPastCommitWork}
-              />
               <BranchHeader
                 currentFileBrowserPath={this.state.currentFileBrowserPath}
                 topRepoPath={this.state.topRepoPath}
@@ -285,12 +233,20 @@ export class GitPanel extends React.Component<
                 disabled={this.state.disableSwitchBranch}
                 toggleSidebar={this.toggleSidebar}
                 showList={this.state.showList}
-                currentTheme={this.props.app.shell.dataset.themeLight}
+                sideBarExpanded={this.state.sideBarExpanded}
+              />
+              <HistorySideBar
+                isExpanded={this.state.sideBarExpanded}
+                branches={this.state.branches}
+                pastCommits={this.state.pastCommits}
+                topRepoPath={this.state.topRepoPath}
+                app={this.props.app}
+                refresh={this.refresh}
+                diff={this.props.diff}
               />
               <PastCommits
                 currentFileBrowserPath={this.state.currentFileBrowserPath}
                 topRepoPath={this.state.topRepoPath}
-                pastCommits={this.state.pastCommits}
                 inNewRepo={this.state.inNewRepo}
                 showList={this.state.showList}
                 stagedFiles={this.state.stagedFiles}
@@ -299,15 +255,7 @@ export class GitPanel extends React.Component<
                 app={this.props.app}
                 refresh={this.refresh}
                 diff={this.props.diff}
-                pastCommitInfo={this.state.pastCommitInfo}
-                pastCommitFilesChanged={this.state.pastCommitFilesChanged}
-                pastCommitInsertionCount={this.state.pastCommitInsertionCount}
-                pastCommitDeletionCount={this.state.pastCommitDeletionCount}
-                pastCommitData={this.state.pastCommitData}
-                pastCommitNumber={this.state.pastCommitNumber}
-                pastCommitFilelist={this.state.pastCommitFilelist}
                 sideBarExpanded={this.state.sideBarExpanded}
-                currentTheme={this.props.app.shell.dataset.themeLight}
               />
             </div>
           )}

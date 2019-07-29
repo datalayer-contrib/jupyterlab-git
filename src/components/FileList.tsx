@@ -1,12 +1,12 @@
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 
-import { JupyterLab } from '@jupyterlab/application';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 
 import { Menu } from '@phosphor/widgets';
 
 import { PathExt } from '@jupyterlab/coreutils';
 
-import { Git, GitShowPrefixResult } from '../git';
+import { Git, IGitShowPrefixResult } from '../git';
 
 import {
   moveFileUpButtonStyle,
@@ -75,11 +75,10 @@ export interface IFileListProps {
   stagedFiles: any;
   unstagedFiles: any;
   untrackedFiles: any;
-  app: JupyterLab;
+  app: JupyterFrontEnd;
   refresh: any;
   sideBarExpanded: boolean;
   display: boolean;
-  currentTheme: string;
 }
 
 export class FileList extends React.Component<IFileListProps, IFileListState> {
@@ -215,26 +214,6 @@ export class FileList extends React.Component<IFileListProps, IFileListState> {
     });
   }
 
-  /** Handle clicks on a staged file
-   *
-   */
-  handleClickStaged(event: any) {
-    event.preventDefault();
-    if (event.buttons === 2) {
-      <select>
-        <option className="jp-Git-switch-branch" value="" disabled>
-          Open
-        </option>
-        <option className="jp-Git-create-branch-line" disabled>
-          unstaged this file
-        </option>
-        <option className="jp-Git-create-branch" value="">
-          CREATE NEW
-        </option>
-      </select>;
-    }
-  }
-
   /** Handle right-click on a staged file */
   contextMenuStaged = (
     event: any,
@@ -328,7 +307,7 @@ export class FileList extends React.Component<IFileListProps, IFileListState> {
     typeX: string,
     typeY: string,
     path: string,
-    app: JupyterLab
+    app: JupyterFrontEnd
   ) {
     if (typeX === 'D' || typeY === 'D') {
       showDialog({
@@ -350,7 +329,7 @@ export class FileList extends React.Component<IFileListProps, IFileListState> {
       }
       let gitApi = new Git();
       let prefixData = await gitApi.showPrefix((fileBrowser as any).model.path);
-      let underRepoPath = (prefixData as GitShowPrefixResult).under_repo_path;
+      let underRepoPath = (prefixData as IGitShowPrefixResult).under_repo_path;
       let fileBrowserPath = (fileBrowser as any).model.path + '/';
       let openFilePath = fileBrowserPath.substring(
         0,
@@ -518,7 +497,6 @@ export class FileList extends React.Component<IFileListProps, IFileListState> {
               disableOthers={null}
               isDisabled={this.state.disableStaged}
               sideBarExpanded={this.props.sideBarExpanded}
-              currentTheme={this.props.currentTheme}
             />
             <GitStage
               heading={'Changed'}
@@ -552,7 +530,6 @@ export class FileList extends React.Component<IFileListProps, IFileListState> {
               disableOthers={this.disableStagesForDiscardAll}
               isDisabled={this.state.disableUnstaged}
               sideBarExpanded={this.props.sideBarExpanded}
-              currentTheme={this.props.currentTheme}
             />
             <GitStage
               heading={'Untracked'}
@@ -586,7 +563,6 @@ export class FileList extends React.Component<IFileListProps, IFileListState> {
               disableOthers={null}
               isDisabled={this.state.disableUntracked}
               sideBarExpanded={this.props.sideBarExpanded}
-              currentTheme={this.props.currentTheme}
             />
           </div>
         )}
@@ -600,7 +576,7 @@ export function parseFileExtension(path: string): string {
   if (path[path.length - 1] === '/') {
     return folderFileIconStyle;
   }
-  var fileExtension = PathExt.extname(path).toLocaleLowerCase();
+  let fileExtension = PathExt.extname(path).toLocaleLowerCase();
   switch (fileExtension) {
     case '.md':
       return markdownFileIconStyle;
@@ -642,7 +618,7 @@ export function parseSelectedFileExtension(path: string): string {
   if (path[path.length - 1] === '/') {
     return folderFileIconSelectedStyle;
   }
-  var fileExtension = PathExt.extname(path).toLocaleLowerCase();
+  let fileExtension = PathExt.extname(path).toLocaleLowerCase();
   switch (fileExtension) {
     case '.md':
       return markdownFileIconSelectedStyle;

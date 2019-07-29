@@ -50,13 +50,14 @@ export const changeStageButtonStyle = style({
   margin: '0px 2px',
   fontWeight: 600,
   backgroundColor: 'transparent',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  backgroundSize: '14px',
   lineHeight: 'var(--jp-private-running-shutdown-button-height)',
   transition: 'background-color 0.1s ease',
   borderRadius: '2px',
   height: '12px',
   width: '12px',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
   border: 'none',
   outline: 'none',
 
@@ -73,21 +74,10 @@ export const changeStageButtonStyle = style({
   }
 });
 
-export function discardFileButtonStyle(isLight: string) {
-  if(isLight === 'true' || isLight === undefined) {
-    return style({
-      backgroundImage: 'var(--jp-icon-discard-file)',
-      marginLeft: '6px',
-      backgroundSize: '120%'
-    });
-  } else {
-    return style({
-      backgroundImage: 'var(--jp-icon-discard-file-white)',
-      marginLeft: '6px',
-      backgroundSize: '120%'
-    });
-  }
-}
+export const discardFileButtonStyle = style({
+  backgroundImage: 'var(--jp-icon-discard-file)',
+  marginLeft: '6px'
+});
 
 export const discardAllWarningStyle = style({
   height: '40px !important',

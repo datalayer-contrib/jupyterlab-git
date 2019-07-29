@@ -3,8 +3,10 @@ Module for executing git commands, sending results back to the handlers
 """
 import os
 import subprocess
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, CalledProcessError
 from urllib.parse import unquote
+
+from tornado.web import HTTPError
 
 
 class Git:
@@ -16,6 +18,55 @@ class Git:
         super(Git, self).__init__(*args, **kwargs)
         self.root_dir = os.path.realpath(os.path.expanduser(root_dir))
 
+
+    def changed_files(self, base=None, remote=None, single_commit=None):
+        """Gets the list of changed files between two Git refs, or the files changed in a single commit
+
+        There are two reserved "refs" for the base
+            1. WORKING : Represents the Git working tree
+            2. INDEX: Represents the Git staging area / index
+        
+        Keyword Arguments:
+            single_commit {string} -- The single commit ref
+            base {string} -- the base Git ref
+            remote {string} -- the remote Git ref
+        
+        Returns:
+            dict -- the response of format {
+                "code": int, # Command status code
+                "files": [string, string], # List of files changed.
+                "message": [string] # Error response
+            }
+        """
+        if single_commit:
+            cmd = ['git', 'diff', f'{single_commit}^!', '--name-only']
+        elif base and remote:
+            if base == 'WORKING':
+                cmd = ['git', 'diff', remote, '--name-only']
+            elif base == 'INDEX':
+                cmd = ['git', 'diff', '--staged', remote, '--name-only']
+            else:
+                cmd = ['git', 'diff', base, remote, '--name-only']
+        else:
+            raise HTTPError(400, f'Either single_commit or (base and remote) must be provided')
+
+        
+        response = {}
+        try:
+            stdout = subprocess.check_output(
+                cmd, 
+                cwd=self.root_dir,
+                stderr=subprocess.STDOUT
+            )
+            response['files'] = stdout.decode('utf-8').strip().split('\n')
+            response['code'] = 0
+        except CalledProcessError as e:
+            response['message'] =  e.output.decode('utf-8')
+            response['code'] = e.returncode
+
+        return response
+
+
     def clone(self, current_path, repo_url):
         """
         Execute `git clone`. Disables prompts for the password to avoid the terminal hanging.
@@ -23,12 +74,14 @@ class Git:
         :param repo_url: the URL of the repository to be cloned.
         :return: response with status code and error message.
         """
+        env = os.environ.copy()
+        env['GIT_TERMINAL_PROMPT'] = '0'
         p = subprocess.Popen(
-            ['GIT_TERMINAL_PROMPT=0 git clone {}'.format(unquote(repo_url))],
-            shell=True,
+            ['git', 'clone', unquote(repo_url)],
             stdout=PIPE,
             stderr=PIPE,
             cwd=os.path.join(self.root_dir, current_path),
+            env=env,
         )
         _, error = p.communicate()
 
@@ -221,7 +274,7 @@ class Git:
         if p.returncode == 0:
             results = []
             try:
-                current_branch = self._get_current_branch(current_path)
+                current_branch = self.get_current_branch(current_path)
                 for line in output.decode('utf-8').splitlines():
                     # The format for git show-ref is '<SHA-1 ID> <space> <reference name>'
                     # For this method we are only interested in reference name.
@@ -234,13 +287,14 @@ class Git:
                         is_remote_branch = self._is_remote_branch(reference_name)
                         upstream_branch_name = None
                         if not is_remote_branch:
-                            upstream_branch_name = self._get_upstream_branch(current_path, branch_name)
+                            upstream_branch_name = self.get_upstream_branch(current_path, branch_name)
                         tag = self._get_tag(current_path, commit_sha)
                         results.append({
                             'is_current_branch': is_current_branch,
                             'is_remote_branch': is_remote_branch,
                             'name': branch_name,
                             'upstream': upstream_branch_name,
+                            'top_commit': commit_sha,
                             'tag': tag,
                         })
                 
@@ -254,6 +308,7 @@ class Git:
                         'is_remote_branch': False,
                         'name': self._get_detached_head_name(current_path),
                         'upstream': None,
+                        'top_commit': None,
                         'tag': None,
                     })
                 return {'code': p.returncode, 'branches': results}
@@ -347,7 +402,7 @@ class Git:
         Execute git reset <filename> command & return the result.
         """
         my_output = subprocess.check_output(
-            ["git", "reset", filename], cwd=top_repo_path
+            ["git", "reset", "--", filename], cwd=top_repo_path
         )
         return my_output
 
@@ -442,45 +497,54 @@ class Git:
         )
         return my_output
 
-    def pull(self, origin, master, curr_fb_path):
+    def pull(self, curr_fb_path):
         """
-        Execute git pull <branch1> <branch2> command & return the result.
+        Execute git pull --no-commit.  Disables prompts for the password to avoid the terminal hanging while waiting
+        for auth.
         """
-        p = Popen(
-            ["git", "pull", origin, master, "--no-commit"],
+        env = os.environ.copy()
+        env['GIT_TERMINAL_PROMPT'] = '0'
+        p = subprocess.Popen(
+            ['git', 'pull', '--no-commit'],
             stdout=PIPE,
             stderr=PIPE,
             cwd=os.path.join(self.root_dir, curr_fb_path),
+            env=env,
         )
-        my_output, my_error = p.communicate()
-        if p.returncode == 0:
-            return {"code": p.returncode}
-        else:
-            return {
-                "code": p.returncode,
-                "command": "git pull " + origin + " " + master + " --no-commit",
-                "message": my_error.decode("utf-8"),
-            }
+        _, error = p.communicate()
 
-    def push(self, origin, master, curr_fb_path):
+        response = {
+            'code': p.returncode
+        }
+
+        if p.returncode != 0:
+            response['message'] = error.decode('utf-8').strip()
+
+        return response
+
+    def push(self, remote, branch, curr_fb_path):
         """
-        Execute git push <branch1> <branch2> command & return the result.
+        Execute `git push $UPSTREAM $BRANCH`. The choice of upstream and branch is up to the caller.
         """
-        p = Popen(
-            ["git", "push", origin, master],
+        env = os.environ.copy()
+        env['GIT_TERMINAL_PROMPT'] = '0'
+        p = subprocess.Popen(
+            ['git', 'push', remote, branch],
             stdout=PIPE,
             stderr=PIPE,
             cwd=os.path.join(self.root_dir, curr_fb_path),
+            env=env,
         )
-        my_output, my_error = p.communicate()
-        if p.returncode == 0:
-            return {"code": p.returncode}
-        else:
-            return {
-                "code": p.returncode,
-                "command": "git push " + origin + " " + master,
-                "message": my_error.decode("utf-8"),
-            }
+        _, error = p.communicate()
+
+        response = {
+            'code': p.returncode
+        }
+
+        if p.returncode != 0:
+            response['message'] = error.decode('utf-8').strip()
+
+        return response
 
     def init(self, current_path):
         """
@@ -518,7 +582,7 @@ class Git:
         raise ValueError(
             'Reference [{}] is not a valid branch.', branch_reference)
 
-    def _get_current_branch(self, current_path):
+    def get_current_branch(self, current_path):
         """Execute 'git rev-parse --abbrev-ref HEAD' to
         check if given branch is current branch
         """
@@ -560,7 +624,7 @@ class Git:
                 ' '.join(command)
             ))
 
-    def _get_upstream_branch(self, current_path, branch_name):
+    def get_upstream_branch(self, current_path, branch_name):
         """Execute 'git rev-parse --abbrev-ref branch_name@{upstream}' to get
         upstream branch name tracked by given local branch.
         Reference : https://git-scm.com/docs/git-rev-parse#git-rev-parse-emltbranchnamegtupstreamemegemmasterupstreamememuem
@@ -588,7 +652,7 @@ class Git:
         nearest tag associated with lastest commit in branch.
         Reference : https://git-scm.com/docs/git-describe#git-describe-ltcommit-ishgt82308203
         """
-        command = ['git', 'describe', commit_sha]
+        command = ['git', 'describe', '--tags', commit_sha]
         p = subprocess.Popen(
             command,
             stdout=PIPE,
@@ -599,6 +663,8 @@ class Git:
         if p.returncode == 0:
             return output.decode('utf-8').strip()
         elif "fatal: No tags can describe '{}'.".format(commit_sha) in error.decode('utf-8'):
+            return None
+        elif "fatal: No names found" in error.decode('utf-8'):
             return None
         else:
             raise Exception('Error [{}] occurred while executing [{}] command to get nearest tag associated with branch.'.format(

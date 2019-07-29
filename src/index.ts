@@ -6,13 +6,11 @@ import { GitWidget } from './components/GitWidget';
 
 import {
   ILayoutRestorer,
-  JupyterLab,
-  JupyterLabPlugin
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 
-import {
-  IFileBrowserFactory
-} from '@jupyterlab/filebrowser'
+import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
 import { IMainMenu } from '@jupyterlab/mainmenu';
 
@@ -22,15 +20,35 @@ import { Token } from '@phosphor/coreutils';
 
 import { gitTabStyle } from './componentsStyle/GitWidgetStyle';
 
+import { IDiffCallback } from './git';
+export { IDiffCallback } from './git';
+
 import '../style/variables.css';
-import {GitClone} from "./gitClone";
+import { GitClone } from './gitClone';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+
+export const EXTENSION_ID = 'jupyter.extensions.git_plugin';
+
+// tslint:disable-next-line: variable-name
+export const IGitExtension = new Token<IGitExtension>(EXTENSION_ID);
+
+/** Interface for extension class */
+export interface IGitExtension {
+  registerDiffProvider(filetypes: string[], callback: IDiffCallback): void;
+}
 
 /**
  * The default running sessions extension.
  */
-const plugin: JupyterLabPlugin<IGitExtension> = {
+const plugin: JupyterFrontEndPlugin<IGitExtension> = {
   id: 'jupyter.extensions.running-sessions-git',
-  requires: [IMainMenu, ILayoutRestorer, IFileBrowserFactory],
+  requires: [
+    IMainMenu,
+    ILayoutRestorer,
+    IFileBrowserFactory,
+    IRenderMimeRegistry
+  ],
+  provides: IGitExtension,
   activate,
   autoStart: true
 };
@@ -40,81 +58,67 @@ const plugin: JupyterLabPlugin<IGitExtension> = {
  */
 export default plugin;
 
-export const EXTENSION_ID = 'jupyter.extensions.git_plugin';
-
-export const IGitExtension = new Token<IGitExtension>(EXTENSION_ID);
-
-/** Interface for extension class */
-export interface IGitExtension {
-  register_diff_provider(filetypes: string[], callback: IDiffCallback): void;
-}
-
-/** Function type for diffing a file's revisions */
-export type IDiffCallback = (
-  filename: string,
-  revisionA: string,
-  revisionB: string
-) => void;
-
 /** Main extension class */
 export class GitExtension implements IGitExtension {
-  git_plugin: GitWidget;
-  git_clone_widget: GitClone;
-  constructor(app: JupyterLab, restorer: ILayoutRestorer, factory: IFileBrowserFactory) {
-    this.git_plugin = new GitWidget(
+  gitPlugin: GitWidget;
+  gitCloneWidget: GitClone;
+  constructor(
+    app: JupyterFrontEnd,
+    restorer: ILayoutRestorer,
+    factory: IFileBrowserFactory
+  ) {
+    this.app = app;
+    this.gitPlugin = new GitWidget(
       app,
       { manager: app.serviceManager },
       this.performDiff.bind(this)
     );
-    this.git_plugin.id = 'jp-git-sessions';
-    this.git_plugin.title.iconClass = `jp-SideBar-tabIcon ${gitTabStyle}`;
-    this.git_plugin.title.caption = 'Git';
+    this.gitPlugin.id = 'jp-git-sessions';
+    this.gitPlugin.title.iconClass = `jp-SideBar-tabIcon ${gitTabStyle}`;
+    this.gitPlugin.title.caption = 'Git';
 
     // Let the application restorer track the running panel for restoration of
     // application state (e.g. setting the running panel as the current side bar
     // widget).
 
-    restorer.add(this.git_plugin, 'git-sessions');
-    app.shell.addToLeftArea(this.git_plugin, { rank: 200 });
+    restorer.add(this.gitPlugin, 'git-sessions');
+    app.shell.add(this.gitPlugin, 'left', { rank: 200 });
 
-    this.git_clone_widget = new GitClone(factory);
+    this.gitCloneWidget = new GitClone(factory);
   }
 
-  register_diff_provider(filetypes: string[], callback: IDiffCallback): void {
+  registerDiffProvider(filetypes: string[], callback: IDiffCallback): void {
     filetypes.forEach(fileType => {
       this.diffProviders[fileType] = callback;
     });
   }
 
-  performDiff(
-    app: JupyterLab,
-    filename: string,
-    revisionA: string,
-    revisionB: string
-  ) {
+  performDiff(filename: string, revisionA: string, revisionB: string) {
     let extension = PathExt.extname(filename).toLocaleLowerCase();
     if (this.diffProviders[extension] !== undefined) {
       this.diffProviders[extension](filename, revisionA, revisionB);
     } else {
-      app.commands.execute('git:terminal-cmd', {
+      this.app.commands.execute('git:terminal-cmd', {
         cmd: 'git diff ' + revisionA + ' ' + revisionB
       });
     }
   }
 
+  private app: JupyterFrontEnd;
   private diffProviders: { [key: string]: IDiffCallback } = {};
 }
+
 /**
  * Activate the running plugin.
  */
 function activate(
-  app: JupyterLab,
+  app: JupyterFrontEnd,
   mainMenu: IMainMenu,
   restorer: ILayoutRestorer,
   factory: IFileBrowserFactory
 ): IGitExtension {
   const { commands } = app;
-  let git_extension = new GitExtension(app, restorer, factory);
+  let gitExtension = new GitExtension(app, restorer, factory);
   const category = 'Git';
 
   // Rank has been chosen somewhat arbitrarily to give priority to the running
@@ -124,13 +128,11 @@ function activate(
   let tutorial = new Menu({ commands });
   tutorial.title.label = ' Tutorial ';
   menu.title.label = category;
-  [
-    CommandIDs.gitUI,
-    CommandIDs.gitTerminal,
-    CommandIDs.gitInit
-  ].forEach(command => {
-    menu.addItem({ command });
-  });
+  [CommandIDs.gitUI, CommandIDs.gitTerminal, CommandIDs.gitInit].forEach(
+    command => {
+      menu.addItem({ command });
+    }
+  );
 
   [CommandIDs.setupRemotes, CommandIDs.googleLink].forEach(command => {
     tutorial.addItem({ command });
@@ -138,5 +140,5 @@ function activate(
   menu.addItem({ type: 'submenu', submenu: tutorial });
   mainMenu.addMenu(menu, { rank: 60 });
 
-  return git_extension;
+  return gitExtension;
 }

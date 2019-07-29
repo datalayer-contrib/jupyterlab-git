@@ -2,9 +2,19 @@ import { style } from 'typestyle';
 
 export const branchStyle = style({
   zIndex: 1,
-  height: '100px',
   textAlign: 'center',
   overflowY: 'auto'
+});
+
+export const selectedHeaderStyle = style({
+  borderTop: 'var(--jp-border-width) solid var(--jp-border-color2)',
+  paddingBottom: 'var(--jp-border-width)'
+});
+
+export const unSelectedHeaderStyle = style({
+  backgroundColor: 'var(--jp-layout-color2)',
+  borderBottom: 'var(--jp-border-width) solid var(--jp-border-color2)',
+  paddingTop: 'var(--jp-border-width)'
 });
 
 export const smallBranchStyle = style({
@@ -16,23 +26,19 @@ export const expandedBranchStyle = style({
 });
 
 export const openHistorySideBarButtonStyle = style({
-  backgroundColor: 'var(--jp-layout-color3)',
   width: '50px',
-  height: '15px',
-  position: 'fixed',
-  left: '33px',
-  outline: 'none',
-  border: 'none',
-  color: '#FFFFFF'
+  flex: 'initial',
+  paddingLeft: '10px',
+  paddingRight: '10px',
+  borderRight: 'var(--jp-border-width) solid var(--jp-border-color2)'
 });
 
-export const openHistorySideBarIconStyle = style({
-  backgroundImage: 'var(--jp-caret-right-white)',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: '100%',
-  width: '8px',
-  height: '8px'
+export const historyLabelStyle = style({
+  fontSize: 'var(--jp-ui-font-size1)',
+  marginTop: '5px',
+  marginBottom: '5px',
+  display: 'inline-block',
+  fontWeight: 'normal'
 });
 
 export const branchLabelStyle = style({
@@ -46,9 +52,8 @@ export const branchTrackingLabelStyle = style({
   fontSize: 'var(--jp-ui-font-size1)',
   marginTop: '5px',
   marginBottom: '5px',
-  marginLeft: '5px',
   display: 'inline-block',
-  color: '#828282',
+  color: 'var(--jp-ui-font-color2)',
   fontWeight: 'normal'
 });
 
@@ -84,68 +89,39 @@ export const headerButtonStyle = style({
   marginLeft: '5px'
 });
 
-export function branchDropdownButtonStyle(isLight: string) {
-  if (isLight === 'true' || isLight === undefined) {
-    return style({
-      backgroundImage: 'var(--jp-icon-arrow-down)',
-      backgroundSize: '100%',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      height: '18px',
-      width: '18px',
-      display: 'inline-block',
-      verticalAlign: 'middle'
-    });
-  } else {
-    return style({
-      backgroundImage: 'var(--jp-icon-arrow-down-white)',
-      backgroundSize: '100%',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      height: '18px',
-      width: '18px',
-      display: 'inline-block',
-      verticalAlign: 'middle'
-    });
-  }
-}
-
-export function newBranchButtonStyle(isLight: string) {
-  if (isLight === 'true' || isLight === undefined) {
-    return style({
-      backgroundImage: 'var(--jp-icon-plus)',
-      backgroundSize: '100%',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      height: '18px',
-      width: '18px',
-      display: 'inline-block',
-      verticalAlign: 'middle'
-    });
-  } else {
-    return style({
-      backgroundImage: 'var(--jp-icon-plus-white)',
-      backgroundSize: '100%',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      height: '18px',
-      width: '18px',
-      display: 'inline-block',
-      verticalAlign: 'middle'
-    });
-  }
-}
-
-export const branchTrackingButtonStyle = style({
-  backgroundImage: 'var(--jp-icon-branch-tracking)',
+export const branchDropdownButtonStyle = style({
+  backgroundImage: 'var(--jp-icon-arrow-down)',
   backgroundSize: '100%',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'center',
+  height: '18px',
+  width: '18px',
+  display: 'inline-block',
+  verticalAlign: 'middle'
+});
+
+export const newBranchButtonStyle = style({
+  backgroundImage: 'var(--jp-icon-plus)',
+  backgroundSize: '100%',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'center',
+  height: '18px',
+  width: '18px',
+  display: 'inline-block',
+  verticalAlign: 'middle'
+});
+
+export const branchTrackingIconStyle = style({
+  backgroundImage: 'var(--jp-icon-branch-tracking)',
+  backgroundSize: '70%',
   backgroundRepeat: 'no-repeat',
   height: '18px',
   width: '18px',
   display: 'inline-block',
   verticalAlign: 'middle',
-  marginTop: '5px'
-})
+  marginTop: '8px',
+  marginLeft: '10px'
+});
 
 export const headerButtonDisabledStyle = style({
   opacity: 0.5
@@ -197,14 +173,27 @@ export const stagedCommitMessageStyle = style({
   flex: '20 1 auto',
   resize: 'none',
   padding: '4px 8px',
+  backgroundColor: 'var(--jp-layout-color1)',
+  color: 'var(--jp-ui-font-color0)',
 
   $nest: {
     '&:focus': {
       outline: 'none'
+    },
+    '&::-webkit-input-placeholder': {
+      color: 'var(--jp-ui-font-color3)'
+    },
+    '&::-moz-placeholder': {
+      color: 'var(--jp-ui-font-color3)'
+    },
+    '&::-ms-input-placeholder': {
+      color: 'var(--jp-ui-font-color3)'
     }
   }
 });
 
 export const branchHeaderCenterContent = style({
-  padding: '0 50px 0 50px'
+  paddingLeft: '5px',
+  paddingRight: '5px',
+  flex: 'auto'
 });

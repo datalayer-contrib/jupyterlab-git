@@ -18,6 +18,7 @@ describe('BranchHeader', () => {
     currentFileBrowserPath: '/current/absolute/path',
     topRepoPath: '/absolute/path/to/git/repo',
     currentBranch: 'master',
+    sideBarExpanded: false,
     upstreamBranch: 'origin/master',
     stagedFiles: ['test-1', 'test-2'],
     data: ['master', 'feature-1', 'feature-2', 'patch-007'],
@@ -26,8 +27,7 @@ describe('BranchHeader', () => {
     toggleSidebar: function() {
       return true;
     },
-    showList: true,
-    currentTheme: 'dark'
+    showList: true
   };
 
   describe('#constructor()', () => {
@@ -142,12 +142,12 @@ describe('BranchHeader', () => {
         stagedFiles: ['test-1', 'test-2'],
         data: ['master', 'feature-1', 'feature-2', 'patch-007'],
         refresh: 'update all content',
+        sideBarExpanded: false,
         disabled: false,
         toggleSidebar: function() {
           return true;
         },
-        showList: false,
-        currentTheme: 'dark'
+        showList: false
       });
       let actual = branchHeader.getBranchStyle();
       let expected = classes(branchStyle, smallBranchStyle);

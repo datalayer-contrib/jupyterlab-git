@@ -3,9 +3,9 @@ import { style } from 'typestyle';
 export const commitStyle = style({
   flex: '0 0 auto',
   width: '100%',
-  paddingLeft: '10px',
   fontSize: '12px',
-  marginBottom: '10px'
+  marginBottom: '10px',
+  marginTop: '5px'
 });
 
 export const headerStyle = style({
@@ -16,33 +16,8 @@ export const headerStyle = style({
   height: '30px'
 });
 
-export const commitNumberLabelStyle = style({
-  float: 'right',
-  paddingRight: '19px',
-  fontWeight: 'bold',
-  display: 'inline-block'
-});
-
-export const commitAuthorLabelStyle = style({
-  fontSize: '10px'
-});
-
-export const commitAuthorIconStyle = style({
-  backgroundImage: 'var(--jp-Git-icon-author)',
-  display: 'inline-block',
-  height: '9px',
-  width: '9px'
-});
-
-export const commitLabelDateStyle = style({
-  fontSize: '13px',
-  display: 'inline-block'
-});
-
-export const commitLabelMessageStyle = style({
-  fontSize: '13px',
-  textAlign: 'left',
-  paddingRight: '10px'
+export const floatRightStyle = style({
+  float: 'right'
 });
 
 export const commitOverviewNumbers = style({
@@ -62,12 +37,10 @@ export const commitOverviewNumbers = style({
 export const commitDetailStyle = style({
   flex: '1 1 auto',
   margin: '0',
-  paddingLeft: '10px',
   overflow: 'auto'
 });
 
 export const commitDetailHeader = style({
-  borderBottom: 'var(--jp-border-width) solid var(--jp-border-color2)',
   fontSize: '13px',
   fontWeight: 'bold'
 });
@@ -99,7 +72,7 @@ export const iconStyle = style({
   height: '13px',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
-  backgroundSize: '15px',
+  backgroundSize: '14px',
   right: '10px'
 });
 
@@ -107,45 +80,18 @@ export const numberofChangedFilesStyle = style({
   backgroundImage: 'var(--jp-icon-file)'
 });
 
-export function insertionIconStyle(isLight: string) {
-  if (isLight === 'true' || isLight === undefined) {
-    return style({
-      backgroundImage: 'var(--jp-icon-insertions-made)'
-    });
-  } else {
-    return style({
-      backgroundImage: 'var(--jp-icon-insertions-made-white)'
-    });
-  }
-}
+export const insertionIconStyle = style({
+  backgroundImage: 'var(--jp-icon-insertions-made)'
+});
 
-export function deletionIconStyle(isLight: string) {
-  if (isLight === 'true' || isLight === undefined) {
-    return style({
-      backgroundImage: 'var(--jp-icon-deletions-made)'
-    });
-  } else {
-    return style({
-      backgroundImage: 'var(--jp-icon-deletions-made-white)'
-    });
-  }
-}
+export const deletionIconStyle = style({
+  backgroundImage: 'var(--jp-icon-deletions-made)'
+});
 
-export function revertButtonStyle(isLight: string) {
-  if (isLight === 'true' || isLight === undefined) {
-    return style({
-      backgroundImage: 'var(--jp-icon-rewind)',
-      marginLeft: '6px',
-      backgroundSize: '100%'
-    });
-  } else {
-    return style({
-      backgroundImage: 'var(--jp-icon-rewind-white)',
-      marginLeft: '6px',
-      backgroundSize: '100%'
-    });
-  }
-}
+export const revertButtonStyle = style({
+  backgroundImage: 'var(--jp-icon-rewind)',
+  marginLeft: '6px'
+});
 
 export const numberOfDeletionsStyle = style({
   position: 'absolute',
@@ -161,31 +107,31 @@ export const numberOfInsertionsStyle = style({
   marginTop: '1px'
 });
 
-export const WarningLabel = style({
+export const warningLabel = style({
   padding: '5px 1px 5px 0'
 });
 
-export const MessageInput = style({
+export const messageInput = style({
   boxSizing: 'border-box',
   width: '95%',
   marginBottom: '7px'
 });
 
-export const Button = style({
+export const button = style({
   outline: 'none',
   border: 'none',
   color: 'var(--jp-layout-color0)'
 });
 
-export const ResetDeleteDisabledButton = style({
+export const resetDeleteDisabledButton = style({
   backgroundColor: 'var(--jp-error-color2)'
 });
 
-export const ResetDeleteButton = style({
+export const resetDeleteButton = style({
   backgroundColor: 'var(--jp-error-color1)'
 });
 
-export const CancelButton = style({
+export const cancelButton = style({
   backgroundColor: 'var(--jp-layout-color4)',
   marginRight: '4px'
 });
