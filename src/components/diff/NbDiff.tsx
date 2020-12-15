@@ -1,9 +1,12 @@
 import { PathExt } from '@jupyterlab/coreutils';
 import * as nbformat from '@jupyterlab/nbformat';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
-import { IDiffEntry } from 'nbdime/lib/diff/diffentries';
-import { CellDiffModel, NotebookDiffModel } from 'nbdime/lib/diff/model';
-import { CellDiffWidget } from 'nbdime/lib/diff/widget';
+import { IDiffEntry } from '@datalayer-jupyter/nbdime/lib/diff/diffentries';
+import {
+  CellDiffModel,
+  NotebookDiffModel
+} from '@datalayer-jupyter/nbdime/lib/diff/model';
+import { CellDiffWidget } from '@datalayer-jupyter/nbdime/lib/diff/widget';
 import * as React from 'react';
 import { RefObject } from 'react';
 import { requestAPI } from '../../git';
@@ -186,7 +189,7 @@ export class NBDiff extends React.Component<IDiffProps, INBDiffState> {
         ref_local: { git: diffContext.previousRef.gitRef },
         ref_remote: currentRefValue
       },
-      'nbdime/api'
+      '@datalayer-jupyter/nbdime/api'
     )
       .then((data: INbdimeDiff) => {
         const base = data.base;
